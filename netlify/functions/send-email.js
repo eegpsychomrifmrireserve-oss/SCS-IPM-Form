@@ -200,6 +200,7 @@ exports.handler = async (event, context) => {
           </div>
         </div>
       `;
+      }
     } else {
       // فرم تماس قدیم
       const { from_name, user_email, phone, message } = data;
