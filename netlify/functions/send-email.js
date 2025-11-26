@@ -1,0 +1,368 @@
+const nodemailer = require('nodemailer');
+const XLSX = require('xlsx');
+
+// تابع برای ساخت transporter (باید داخل handler صدا زده شود)
+const createTransporter = () => {
+  // بررسی Environment Variables
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    throw new Error('Environment Variables تنظیم نشده‌اند. لطفاً EMAIL_USER و EMAIL_PASSWORD را در Netlify تنظیم کنید.');
+  }
+
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
+};
+
+// ساخت فایل Excel
+const createExcelBuffer = (data) => {
+  // اگر data یک آرایه است، مستقیماً استفاده کن، در غیر این صورت آن را در آرایه قرار بده
+  const dataArray = Array.isArray(data) ? data : [data];
+  const worksheet = XLSX.utils.json_to_sheet(dataArray);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'فرم');
+  
+  return XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+};
+
+exports.handler = async (event, context) => {
+  // اضافه کردن CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  // Handle preflight requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: ''
+    };
+  }
+
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method Not Allowed' })
+    };
+  }
+
+  try {
+    // بررسی Environment Variables
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD || !process.env.ADMIN_EMAIL) {
+      console.error('Environment Variables missing:', {
+        EMAIL_USER: !!process.env.EMAIL_USER,
+        EMAIL_PASSWORD: !!process.env.EMAIL_PASSWORD,
+        ADMIN_EMAIL: !!process.env.ADMIN_EMAIL
+      });
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Environment Variables تنظیم نشده‌اند',
+          details: 'لطفاً EMAIL_USER، EMAIL_PASSWORD و ADMIN_EMAIL را در Netlify تنظیم کنید.'
+        })
+      };
+    }
+
+    // بررسی body
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'بدون داده', details: 'لطفاً داده‌های فرم را ارسال کنید.' })
+      };
+    }
+
+    let data;
+    try {
+      data = JSON.parse(event.body);
+    } catch (parseError) {
+      console.error('JSON Parse Error:', parseError);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'داده‌های نامعتبر', details: 'لطفاً فرم را دوباره پر کنید.' })
+      };
+    }
+    
+    // بررسی اینکه آیا داده‌های فرم جدید (تایید کار ماهانه) است یا فرم قدیم (تماس)
+    const isApprovalForm = data.professorName && (data.students || data.studentName);
+    const isNewApprovalForm = data.professorName && data.students; // فرم جدید با لیست دانشجویان
+    
+    let formData, emailSubject, emailHtml, userEmail, userName, studentName, monthYear, approvalStatus;
+    
+    if (isApprovalForm) {
+      // فرم تایید کار ماهانه پژوهشگران
+      if (isNewApprovalForm) {
+        // فرم جدید با لیست دانشجویان
+        const { professorName, professorEmail, projectTitle, students, month, year, monthYear: monthYearValue, description } = data;
+        monthYear = monthYearValue;
+        
+        if (!professorName || !professorEmail || !students || students.length === 0) {
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: 'فیلدهای ضروری را پر کنید' })
+          };
+        }
+        
+        // ایجاد یک ردیف برای هر دانشجو
+        const registrationDate = new Date().toLocaleString('fa-IR');
+        formData = students.map(s => {
+          const statusText = s.approvalStatus === 'approved' ? 'تایید' : 'عدم تایید';
+          return {
+            'نام استاد': professorName,
+            'ایمیل استاد': professorEmail,
+            'عنوان پروژه': projectTitle || '-',
+            'نام دانشجو': s.studentName,
+            'وضعیت تایید': statusText,
+            'توضیحات': description || '-',
+            'تاریخ ثبت': registrationDate
+          };
+        });
+        
+        userName = professorName;
+        userEmail = professorEmail;
+        emailSubject = `📋 فرم تایید کار ماهانه - ${professorName}`;
+        
+        // ساخت HTML ایمیل برای فرم جدید
+        const studentsHtml = students.map(s => {
+          const statusText = s.approvalStatus === 'approved' ? 'تایید' : 'عدم تایید';
+          const statusColor = s.approvalStatus === 'approved' ? '#28a745' : '#dc3545';
+          return `<p style="margin: 5px 0;"><strong>👥 ${s.studentName}:</strong> <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span></p>`;
+        }).join('');
+        
+        emailHtml = `
+          <div dir="rtl" style="font-family: Tahoma, Arial; padding: 20px; background: #f5f5f5;">
+            <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <h2 style="color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px;">فرم تایید کار ماهانه پژوهشگران</h2>
+              <p><strong>👤 نام استاد:</strong> ${professorName}</p>
+              <p><strong>📧 ایمیل استاد:</strong> ${professorEmail}</p>
+              <p><strong>📋 عنوان پروژه:</strong> ${projectTitle || '-'}</p>
+              <p><strong>👥 دانشجویان:</strong></p>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                ${studentsHtml}
+              </div>
+              <p><strong>📅 ماه و سال:</strong> ${monthYear}</p>
+              ${description ? `<p><strong>📝 توضیحات:</strong></p><div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0; border-right: 4px solid #667eea;">${description}</div>` : ''}
+              <p><strong>🕐 تاریخ ثبت:</strong> ${registrationDate}</p>
+            </div>
+          </div>
+        `;
+      } else {
+        // فرم قدیم با یک دانشجو
+        const { professorName, professorEmail, projectTitle, studentName: student, month, year, monthYear: monthYearValue, approvalStatus: status } = data;
+        studentName = student;
+        monthYear = monthYearValue;
+        approvalStatus = status;
+        
+        if (!professorName || !professorEmail || !studentName || !approvalStatus) {
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: 'فیلدهای ضروری را پر کنید' })
+          };
+        }
+        
+        const approvalStatusText = approvalStatus === 'approved' ? 'تایید' : 'عدم تایید';
+        
+        formData = {
+          'نام استاد': professorName,
+          'ایمیل استاد': professorEmail,
+          'عنوان پروژه': projectTitle,
+          'نام دانشجو': studentName,
+          'وضعیت تایید': approvalStatusText,
+          'توضیحات': '-',
+          'تاریخ ثبت': new Date().toLocaleString('fa-IR')
+        };
+      
+      userName = professorName;
+      userEmail = professorEmail;
+      emailSubject = `📋 فرم تایید کار ماهانه - ${studentName}`;
+      emailHtml = `
+        <div dir="rtl" style="font-family: Tahoma, Arial; padding: 20px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px;">فرم تایید کار ماهانه پژوهشگران</h2>
+            <p><strong>👤 نام استاد:</strong> ${professorName}</p>
+            <p><strong>📧 ایمیل استاد:</strong> ${professorEmail}</p>
+            <p><strong>📋 عنوان پروژه:</strong> ${projectTitle}</p>
+            <p><strong>👥 نام دانشجو:</strong> ${studentName}</p>
+            <p><strong>📅 ماه و سال:</strong> ${monthYear}</p>
+            <p><strong>✅ وضعیت تایید:</strong> <span style="color: ${approvalStatus === 'approved' ? '#28a745' : '#dc3545'}; font-weight: bold;">${approvalStatusText}</span></p>
+            <p><strong>🕐 تاریخ ثبت:</strong> ${formData['تاریخ ثبت']}</p>
+          </div>
+        </div>
+      `;
+    } else {
+      // فرم تماس قدیم
+      const { from_name, user_email, phone, message } = data;
+      
+      if (!from_name || !user_email || !message) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'فیلدهای ضروری را پر کنید' })
+        };
+      }
+      
+      formData = {
+        'نام': from_name,
+        'ایمیل': user_email,
+        'تلفن': phone || '-',
+        'پیام': message,
+        'تاریخ': new Date().toLocaleString('fa-IR')
+      };
+      
+      userName = from_name;
+      userEmail = user_email;
+      emailSubject = `📋 فرم جدید از ${from_name}`;
+      emailHtml = `
+        <div dir="rtl" style="font-family: Tahoma, Arial; padding: 20px; background: #f5f5f5;">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px;">فرم جدیدی دریافت شد</h2>
+            <p><strong>👤 نام:</strong> ${from_name}</p>
+            <p><strong>📧 ایمیل:</strong> ${user_email}</p>
+            <p><strong>📱 تلفن:</strong> ${phone || '-'}</p>
+            <p><strong>📅 تاریخ:</strong> ${formData['تاریخ']}</p>
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+            <p><strong>💬 پیام:</strong></p>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-right: 4px solid #667eea;">
+              ${message}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const excelBuffer = createExcelBuffer(formData);
+
+    // ساخت transporter
+    const transporter = createTransporter();
+
+    // ارسال به ایمیل Admin
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: process.env.ADMIN_EMAIL,
+      subject: emailSubject,
+      html: emailHtml,
+      attachments: [{
+        filename: `form_${Date.now()}.xlsx`,
+        content: excelBuffer,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      }]
+    });
+
+    // ارسال به ایمیل کاربر
+    const userEmailHtml = isApprovalForm ? (isNewApprovalForm ? `
+      <div dir="rtl" style="font-family: Tahoma, Arial; padding: 20px; background: #f5f5f5;">
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <h2 style="color: #4CAF50;">سلام ${userName} عزیز،</h2>
+          <p>فرم تایید کار ماهانه شما با موفقیت دریافت شد.</p>
+          <hr style="margin: 20px 0;">
+          <p><strong>📋 اطلاعات فرم:</strong></p>
+          <div style="background: #f0f0f0; padding: 15px; border-radius: 5px;">
+            <p><strong>ماه و سال:</strong> ${monthYear}</p>
+            <p><strong>تعداد دانشجویان:</strong> ${data.students.length}</p>
+            ${data.description ? `<p><strong>توضیحات:</strong> ${data.description}</p>` : ''}
+          </div>
+          <p style="color: #999; font-size: 12px; margin-top: 20px;">
+            این ایمیل به صورت خودکار ارسال شده است.
+          </p>
+        </div>
+      </div>
+    ` : `
+      <div dir="rtl" style="font-family: Tahoma, Arial; padding: 20px; background: #f5f5f5;">
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <h2 style="color: #4CAF50;">سلام ${userName} عزیز،</h2>
+          <p>فرم تایید کار ماهانه شما با موفقیت دریافت شد.</p>
+          <hr style="margin: 20px 0;">
+          <p><strong>📋 اطلاعات فرم:</strong></p>
+          <div style="background: #f0f0f0; padding: 15px; border-radius: 5px;">
+            <p><strong>نام دانشجو:</strong> ${studentName}</p>
+            <p><strong>ماه و سال:</strong> ${monthYear}</p>
+            <p><strong>وضعیت:</strong> ${approvalStatus === 'approved' ? '✅ تایید' : '❌ عدم تایید'}</p>
+          </div>
+          <p style="color: #999; font-size: 12px; margin-top: 20px;">
+            این ایمیل به صورت خودکار ارسال شده است.
+          </p>
+        </div>
+      </div>
+    `) : `
+      <div dir="rtl" style="font-family: Tahoma, Arial; padding: 20px; background: #f5f5f5;">
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <h2 style="color: #4CAF50;">سلام ${userName} عزیز،</h2>
+          <p>فرم شما با موفقیت دریافت شد و در اسرع وقت بررسی خواهد شد.</p>
+          <hr style="margin: 20px 0;">
+          <p><strong>پیام شما:</strong></p>
+          <div style="background: #f0f0f0; padding: 15px; border-radius: 5px;">
+            ${data.message}
+          </div>
+          <p style="color: #999; font-size: 12px; margin-top: 20px;">
+            این ایمیل به صورت خودکار ارسال شده است.
+          </p>
+        </div>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: userEmail,
+      subject: isApprovalForm ? '✅ تایید دریافت فرم تایید کار ماهانه' : '✅ تایید دریافت فرم شما',
+      html: userEmailHtml,
+      attachments: [{
+        filename: `form_${Date.now()}.xlsx`,
+        content: excelBuffer,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      }]
+    });
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ 
+        success: true,
+        message: 'فرم با موفقیت ارسال شد!'
+      })
+    };
+
+  } catch (error) {
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
+    // بررسی نوع خطا
+    let errorMessage = 'خطا در ارسال فرم';
+    let errorDetails = error.message;
+    
+    if (error.message.includes('Environment Variables')) {
+      errorMessage = 'تنظیمات ناقص است';
+      errorDetails = 'لطفاً Environment Variables را در Netlify تنظیم کنید.';
+    } else if (error.message.includes('Invalid login') || error.message.includes('authentication')) {
+      errorMessage = 'خطا در احراز هویت Gmail';
+      errorDetails = 'لطفاً App Password را بررسی کنید.';
+    } else if (error.message.includes('ECONNECTION') || error.message.includes('ETIMEDOUT')) {
+      errorMessage = 'خطا در اتصال به سرور ایمیل';
+      errorDetails = 'لطفاً اتصال اینترنت را بررسی کنید.';
+    }
+    
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: errorMessage,
+        details: errorDetails,
+        type: error.name || 'UnknownError'
+      })
+    };
+  }
+};
+

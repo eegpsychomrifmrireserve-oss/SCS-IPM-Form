@@ -1,0 +1,672 @@
+.container {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 30px 20px;
+  background: transparent;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  overscroll-behavior: contain; /* Prevent scroll chaining */
+}
+
+.formWrapper {
+  width: 100%;
+  max-width: 700px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeInUp 0.6s ease-out;
+  /* Ensure form is scrollable on mobile */
+  overflow: visible;
+  position: relative;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.headerSection {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  gap: 20px;
+  position: relative;
+  direction: rtl;
+}
+
+.headerSection .dateDisplay {
+  margin-top: 0;
+  align-self: flex-start;
+}
+
+.dateDisplay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  direction: rtl;
+  flex-shrink: 0;
+  order: 1;
+}
+
+.dateIcon {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.dateText {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.headerText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  order: 2;
+  margin-left: 100px;
+}
+
+.title {
+  text-align: center;
+  color: #fff;
+  margin-bottom: 10px;
+  font-size: 24px;
+  font-weight: 700;
+  direction: rtl;
+  width: 100%;
+}
+
+.description {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0;
+  font-size: 14px;
+  direction: rtl;
+  width: 100%;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  direction: rtl;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  font-size: 18px;
+}
+
+.select {
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  background: #f8f9fa;
+  cursor: pointer;
+  direction: rtl;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.input {
+  padding: 14px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  background: #f8f9fa;
+  direction: rtl;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.textarea {
+  padding: 14px 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  direction: rtl;
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.infoBox {
+  padding: 14px 16px;
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  font-size: 15px;
+  background: rgba(102, 126, 234, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  direction: rtl;
+}
+
+.studentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  direction: rtl;
+}
+
+.studentItem {
+  padding: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.studentItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.studentInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  direction: rtl;
+  flex-wrap: wrap;
+}
+
+.studentName {
+  font-weight: 600;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.95);
+  direction: rtl;
+  flex: 1;
+  min-width: 0;
+}
+
+.studentStatus {
+  font-weight: 400;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  direction: rtl;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.studentApprovalButtons {
+  display: flex;
+  gap: 10px;
+  direction: rtl;
+}
+
+.studentApprovalBtn {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.monthSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  direction: rtl;
+}
+
+.monthDisplay {
+  padding: 14px 16px;
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  background: rgba(102, 126, 234, 0.15);
+  color: #fff;
+  text-align: center;
+  direction: rtl;
+}
+
+.approvalButtons {
+  display: flex;
+  gap: 12px;
+  direction: rtl;
+}
+
+.approvalBtn {
+  flex: 1;
+  padding: 14px 20px;
+  border: 2px solid;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.approveBtn {
+  background: rgba(40, 167, 69, 0.1);
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.approveBtn:hover {
+  background: rgba(40, 167, 69, 0.2);
+  transform: translateY(-2px);
+}
+
+.approveBtn.active {
+  background: #28a745;
+  color: white;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+
+.rejectBtn {
+  background: rgba(220, 53, 69, 0.1);
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.rejectBtn:hover {
+  background: rgba(220, 53, 69, 0.2);
+  transform: translateY(-2px);
+}
+
+.rejectBtn.active {
+  background: #dc3545;
+  color: white;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+.confirmationText {
+  padding: 20px;
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: 12px;
+  background: rgba(102, 126, 234, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  line-height: 1.8;
+  text-align: justify;
+  direction: rtl;
+}
+
+.confirmationText strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.submitBtn {
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.submitBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitBtn:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.message {
+  text-align: center;
+  padding: 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  margin: 0;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.success {
+  background: #d4edda;
+  color: #155724;
+  border: 2px solid #c3e6cb;
+}
+
+.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 2px solid #f5c6cb;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px 10px;
+    min-height: 100vh;
+  }
+
+  .formWrapper {
+    padding: 20px 15px;
+    border-radius: 15px;
+    max-width: 100%;
+  }
+
+  .headerSection {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .dateDisplay {
+    justify-content: center;
+    padding: 0;
+    width: 100%;
+    order: 1;
+  }
+
+  .dateText {
+    font-size: 13px;
+  }
+
+  .headerText {
+    width: 100%;
+    align-items: center;
+    order: 2;
+    margin-left: 0;
+  }
+  
+  .title {
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  
+  .description {
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .form {
+    gap: 20px;
+  }
+
+  .field {
+    gap: 10px;
+  }
+
+  .field label {
+    font-size: 15px;
+  }
+
+  .select,
+  .input {
+    padding: 16px 18px;
+    font-size: 16px; /* Prevent zoom on iOS */
+    border-radius: 10px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .textarea {
+    padding: 16px 18px;
+    font-size: 16px; /* Prevent zoom on iOS */
+    border-radius: 10px;
+    min-height: 120px;
+  }
+
+  .infoBox {
+    padding: 16px 18px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+
+  .studentsList {
+    gap: 15px;
+  }
+
+  .studentItem {
+    padding: 18px;
+    border-radius: 10px;
+    gap: 15px;
+  }
+
+  .studentInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .studentName {
+    font-size: 16px;
+    width: 100%;
+  }
+
+  .studentStatus {
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .studentApprovalButtons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .studentApprovalBtn {
+    padding: 14px 20px;
+    font-size: 16px;
+    min-height: 48px; /* Minimum touch target size */
+    border-radius: 10px;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+    touch-action: manipulation; /* Improve touch responsiveness */
+  }
+
+  .approvalButtons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .approvalBtn {
+    padding: 16px 24px;
+    font-size: 16px;
+    min-height: 48px;
+    border-radius: 10px;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+    touch-action: manipulation;
+  }
+
+  .submitBtn {
+    padding: 18px 24px;
+    font-size: 17px;
+    font-weight: 700;
+    min-height: 52px; /* Larger touch target for primary action */
+    border-radius: 12px;
+    margin-top: 15px;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+    touch-action: manipulation;
+  }
+
+  .confirmationText {
+    font-size: 15px;
+    padding: 18px;
+    line-height: 1.7;
+  }
+
+  .message {
+    padding: 18px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .container {
+    padding: 10px 8px;
+  }
+
+  .formWrapper {
+    padding: 18px 12px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .description {
+    font-size: 12px;
+  }
+
+  .field label {
+    font-size: 14px;
+  }
+
+  .select,
+  .input,
+  .textarea {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
+
+  .studentApprovalBtn,
+  .approvalBtn {
+    padding: 12px 18px;
+    font-size: 15px;
+  }
+
+  .submitBtn {
+    padding: 16px 20px;
+    font-size: 16px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .studentApprovalBtn:hover,
+  .approvalBtn:hover,
+  .submitBtn:hover:not(:disabled) {
+    transform: none; /* Disable hover effects on touch devices */
+  }
+
+  .studentApprovalBtn:active,
+  .approvalBtn:active,
+  .submitBtn:active:not(:disabled) {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+
+  .select:focus,
+  .input:focus,
+  .textarea:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  }
+}
+
