@@ -13,7 +13,6 @@
   justify-content: center;
   padding: 2rem;
   transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  left: 0;
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 100;
@@ -26,7 +25,23 @@
   padding: 1rem;
 }
 
-@media (max-width: 768px) {
+/* Tablet و Desktop کوچک - بین 600px تا 768px */
+@media (min-width: 600px) and (max-width: 768px) {
+  .mainContent {
+    padding: 1rem;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .mainContent.withSidebar {
+    left: 80%;
+    width: 20%;
+    padding: 1rem;
+  }
+}
+
+/* Mobile - فقط برای صفحات کوچکتر از 600px */
+@media (max-width: 599px) {
   .mainContent {
     padding: 1rem;
     -webkit-overflow-scrolling: touch;
@@ -40,4 +55,3 @@
     overflow: hidden;
   }
 }
-
