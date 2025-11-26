@@ -1,15 +1,7 @@
-functionsDirectory = "/opt/build/repo/netlify/functions"
-functionsDirectoryOrigin = "config-v1"
-headersOrigin = "config"
-redirectsOrigin = "config"
-plugins = []
-
 [build]
-publish = "/opt/build/repo/dist"
-publishOrigin = "config"
-commandOrigin = "config"
 command = "npm run build"
-functions = "/opt/build/repo/netlify/functions"
+publish = "dist"
+functions = "netlify/functions"
 
   [build.environment]
   NODE_VERSION = "18"
